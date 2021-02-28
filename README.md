@@ -12,13 +12,11 @@ A proof of concept of Symlink Directory Traversal on Samba, here i will explain 
 
 The original Manually exploitation explained in the link ( https://www.exploit-db.com/exploits/33599) doesn't work without adding an below lines on exiting smbconfig file..
 
-```
 check smb config info
-
-$ testparm
-
-Load smb config files from /etc/samba/smb.conf
 ```
+$ testparm
+```
+Load smb config files from /etc/samba/smb.conf
 
 then first take backup of exisitng smb.conf file 
 
